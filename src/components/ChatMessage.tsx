@@ -14,6 +14,7 @@ interface ChatMessageProps {
   hasUserBudget?: boolean;
   selectedStrategyIndex?: number;
   isFollowUpMode?: boolean;
+  languageInfo?: { language: string; confidence: number; code: string };
 }
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({ 
@@ -26,7 +27,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   onShowStrategySelection,
   hasUserBudget,
   selectedStrategyIndex,
-  isFollowUpMode
+  isFollowUpMode,
+  languageInfo
 }) => {
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -48,6 +50,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             strategies={strategies} 
             onSelectStrategy={onSelectStrategy}
             hasUserBudget={hasUserBudget}
+            languageInfo={languageInfo}
           />
         ) : (
           <div>

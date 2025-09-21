@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getArtisanPrompt } from '@/prompts/artisanPrompt';
+import { detectLanguage, getLanguageInstruction, getLocalizedText, getTierNames } from '@/utils/languageDetection';
 
 interface UserDetails {
   craftType: string;
@@ -16,6 +17,7 @@ interface Message {
   isStrategySelection?: boolean; // Flag to identify strategy selection messages
   hasUserBudget?: boolean; // Whether user provided a budget
   selectedStrategyIndex?: number; // Index of selected strategy
+  languageInfo?: { language: string; confidence: number; code: string }; // Language detection info
 }
 
 const STORAGE_KEY = 'artisan_chat_details';
@@ -146,8 +148,8 @@ const formatObjectContent = (item: any): string => {
 };
 
 // Function to generate prompt with context for follow-up questions
-const getArtisanPromptWithContext = (followUpQuestion: string, userDetails: UserDetails | null, context: any) => {
-  const basePrompt = getArtisanPrompt(followUpQuestion, userDetails);
+const getArtisanPromptWithContext = (followUpQuestion: string, userDetails: UserDetails | null, context: any, languageInstruction: string) => {
+  const basePrompt = getArtisanPrompt(followUpQuestion, userDetails, languageInstruction);
   
   // Add context information to help the AI understand this is a follow-up about a specific strategy
   const contextInfo = `
@@ -202,7 +204,8 @@ export const useArtisanChat = () => {
         id: `greeting-${Date.now()}`,
         text: `Namaste! I'm artisan-mini. I see you craft in ${userDetails.craftType} and you're in ${userDetails.location}.${additionalText} How can I help you today?`,
         isUser: false,
-        timestamp: new Date()
+        timestamp: new Date(),
+        languageInfo: { language: 'English', confidence: 1, code: 'en' }
       };
       
       setMessages([greetingMessage]);
@@ -233,7 +236,10 @@ export const useArtisanChat = () => {
   const selectStrategy = useCallback((strategyIndex: number) => {
     if (pendingStrategies && pendingStrategies[strategyIndex]) {
       const selectedStrategy = pendingStrategies[strategyIndex];
-      const formattedResponse = formatMarketingStrategy(selectedStrategy);
+      // Get language info from the last user message
+      const lastUserMessage = messages.findLast(m => m.isUser);
+      const languageInfo = lastUserMessage?.languageInfo || { language: 'English', confidence: 1, code: 'en' };
+      const formattedResponse = formatMarketingStrategy(selectedStrategy, languageInfo);
       
       // Store conversation context for follow-up questions
       setConversationContext({
@@ -250,7 +256,8 @@ export const useArtisanChat = () => {
         strategies: pendingStrategies,
         isStrategySelection: false,
         hasUserBudget: pendingStrategies[0]?.given_budget > 0,
-        selectedStrategyIndex: strategyIndex
+        selectedStrategyIndex: strategyIndex,
+        languageInfo
       };
       
       setMessages(prev => [...prev, strategyMessage]);
@@ -260,7 +267,11 @@ export const useArtisanChat = () => {
 
   const showStrategySelection = useCallback(() => {
     if (pendingStrategies) {
-      const formattedResponse = formatMultipleStrategies(pendingStrategies);
+      // Get languageInfo from the last user message in the conversation
+      const lastUserMessage = messages.findLast(m => m.isUser);
+      const languageInfo = lastUserMessage?.languageInfo || { language: 'English', confidence: 1, code: 'en' };
+
+      const formattedResponse = formatMultipleStrategies(pendingStrategies, languageInfo);
       const selectionMessage: Message = {
         id: `strategy-selection-${Date.now()}`,
         text: formattedResponse,
@@ -268,19 +279,24 @@ export const useArtisanChat = () => {
         timestamp: new Date(),
         strategies: pendingStrategies,
         isStrategySelection: true,
-        hasUserBudget: pendingStrategies[0]?.given_budget > 0
+        hasUserBudget: pendingStrategies[0]?.given_budget > 0,
+        languageInfo
       };
       
       setMessages(prev => [...prev, selectionMessage]);
     }
-  }, [pendingStrategies]);
+  }, [pendingStrategies, messages]);
 
   const sendMessage = useCallback(async (text: string) => {
+    // Detect language from user input
+    const languageInfo = detectLanguage(text);
+    
     const userMessage: Message = {
       id: `user-${Date.now()}`,
       text,
       isUser: true,
-      timestamp: new Date()
+      timestamp: new Date(),
+      languageInfo
     };
     
     setMessages(prev => [...prev, userMessage]);
@@ -293,14 +309,18 @@ export const useArtisanChat = () => {
       setConversationContext(null);
     }
 
-    // Add waiting message
+    // Get language instruction for AI
+    const languageInstruction = getLanguageInstruction(languageInfo);
+
+    // Add waiting message in user's language
     const waitingMessage: Message = {
       id: `waiting-${Date.now()}`,
       text: isFollowUpQuestion 
-        ? "🔄 Processing your follow-up question... Please wait a moment."
-        : "🔄 Generating your marketing strategy... Please wait a moment.",
+        ? `🔄 ${getLocalizedText(languageInfo, 'processing')}`
+        : `🔄 ${getLocalizedText(languageInfo, 'waiting')}`,
       isUser: false,
-      timestamp: new Date()
+      timestamp: new Date(),
+      languageInfo
     };
     
     setMessages(prev => [...prev, waitingMessage]);
@@ -316,8 +336,8 @@ export const useArtisanChat = () => {
           contents: [{
             parts: [{
               text: isFollowUpQuestion 
-                ? getArtisanPromptWithContext(text, userDetails, conversationContext)
-                : getArtisanPrompt(text, userDetails)
+                ? getArtisanPromptWithContext(text, userDetails, conversationContext, languageInstruction)
+                : getArtisanPrompt(text, userDetails, languageInstruction)
             }]
           }]
         })
@@ -384,7 +404,8 @@ export const useArtisanChat = () => {
           id: `bot-${Date.now()}`,
           text: `❌  Error : ${strategyData.error}`,
           isUser: false,
-          timestamp: new Date()
+          timestamp: new Date(),
+          languageInfo
         };
         setMessages(prev => [...prev, errorMessage]);
       } else if (strategyData.elaboration || (isFollowUpQuestion && strategyData)) {
@@ -394,7 +415,8 @@ export const useArtisanChat = () => {
           id: `bot-${Date.now()}`,
           text: formattedResponse,
           isUser: false,
-          timestamp: new Date()
+          timestamp: new Date(),
+          languageInfo
         };
         setMessages(prev => [...prev, botMessage]);
       } else if (strategyData.strategies) {
@@ -404,7 +426,7 @@ export const useArtisanChat = () => {
         const userProvidedBudget = strategyData.strategies[0]?.given_budget > 0;
         setHasUserBudget(userProvidedBudget);
         
-        const formattedResponse = formatMultipleStrategies(strategyData.strategies);
+        const formattedResponse = formatMultipleStrategies(strategyData.strategies, languageInfo);
         const botMessage: Message = {
           id: `bot-${Date.now()}`,
           text: formattedResponse,
@@ -412,7 +434,8 @@ export const useArtisanChat = () => {
           timestamp: new Date(),
           strategies: strategyData.strategies,
           isStrategySelection: true,
-          hasUserBudget: userProvidedBudget
+          hasUserBudget: userProvidedBudget,
+          languageInfo
         };
         setMessages(prev => [...prev, botMessage]);
       } else {
@@ -424,17 +447,19 @@ export const useArtisanChat = () => {
           id: `bot-${Date.now()}`,
           text: formattedResponse,
           isUser: false,
-          timestamp: new Date()
+          timestamp: new Date(),
+          languageInfo
         };
         setMessages(prev => [...prev, botMessage]);
       } else {
         // Complete marketing strategy response
-        const formattedResponse = formatMarketingStrategy(strategyData);
+        const formattedResponse = formatMarketingStrategy(strategyData, languageInfo);
         const botMessage: Message = {
           id: `bot-${Date.now()}`,
           text: formattedResponse,
           isUser: false,
-          timestamp: new Date()
+          timestamp: new Date(),
+          languageInfo
         };
         setMessages(prev => [...prev, botMessage]);
         }
@@ -448,9 +473,10 @@ export const useArtisanChat = () => {
       
       const errorMessage: Message = {
         id: `bot-error-${Date.now()}`,
-        text: "❌ I apologize, but I'm having trouble processing your request right now. Please try again in a moment.",
+        text: `❌ ${getLocalizedText(languageInfo, 'error')}`,
         isUser: false,
-        timestamp: new Date()
+        timestamp: new Date(),
+        languageInfo
       };
       
       setMessages(prev => [...prev, errorMessage]);
@@ -590,16 +616,25 @@ export const useArtisanChat = () => {
     return response;
   };
 
-  const formatMultipleStrategies = (strategies: any[]) => {
-    let response = "🎯 Marketing Strategy Options\n\nI've prepared three strategy options for you:\n\n";
+  const formatMultipleStrategies = (strategies: any[], languageInfo?: { language: string; confidence: number; code: string }) => {
+    // Get tier names in user's language
+    const tierNames = languageInfo ? getTierNames(languageInfo) : { low: 'Low', mid: 'Mid', high: 'High' };
+    
+    // Get localized text for strategy options
+    const strategyOptionsText = languageInfo ? getLocalizedText(languageInfo, 'strategyOptions') : "🎯 Marketing Strategy Options\n\nI've prepared three strategy options for you:\n\n";
+    let response = strategyOptionsText;
     
     // Sort strategies by allocated_budget (lowest to highest)
     const sortedStrategies = [...strategies].sort((a, b) => a.allocated_budget - b.allocated_budget);
     
     let budgetLabels: string[];
     if (strategies[0].given_budget == 0) {
-      // Assign labels based on budget order: lowest = budget-friendly, highest = premium
-      budgetLabels = ['💰 Budget-Friendly Strategy', '⭐ Mid-Range Strategy', '💎 Premium Strategy'];
+      // Assign labels based on budget order using localized tier names
+      budgetLabels = [
+        `💰 ${tierNames.low}`, 
+        `⭐ ${tierNames.mid}`, 
+        `💎 ${tierNames.high}`
+      ];
     } else {
       // Use strategy titles when user provided budget
       budgetLabels = sortedStrategies.map((strategy) => strategy.strategy_title);
@@ -641,13 +676,18 @@ export const useArtisanChat = () => {
     });
     
     response += "\n---\n";
-    response += "🎯  Choose a strategy to explore in detail using the buttons below! \n\n";
-    response += "Or ask me to elaborate on any specific aspect! 💬";
+    
+    // Get localized text for end messages
+    const chooseStrategyText = languageInfo ? getLocalizedText(languageInfo, 'chooseStrategy') : "🎯  Choose a strategy to explore in detail using the buttons below!";
+    const askElaborateText = languageInfo ? getLocalizedText(languageInfo, 'askElaborate') : "Or ask me to elaborate on any specific aspect! 💬";
+    
+    response += `${chooseStrategyText} \n\n`;
+    response += `${askElaborateText}`;
     
     return response;
   };
 
-  const formatMarketingStrategy = (data: any) => {
+  const formatMarketingStrategy = (data: any, languageInfo?: { language: string; confidence: number; code: string }) => {
     let response = "";
     
     // Strategy title as main heading
@@ -663,22 +703,26 @@ export const useArtisanChat = () => {
     
     // Strategy overview
     if (data.marketing_strategy) {
-      response += `📋 Strategy Overview\n${data.marketing_strategy}\n\n`;
+      const overviewText = languageInfo ? getLocalizedText(languageInfo, 'strategyOverview') : 'Strategy Overview';
+      response += `📋 ${overviewText}\n${data.marketing_strategy}\n\n`;
     }
     
     // Strategy explanation
     if (data.strategy_explanation) {
-      response += `🎯 Why This Works\n${data.strategy_explanation}\n\n`;
+      const whyWorksText = languageInfo ? getLocalizedText(languageInfo, 'whyThisWorks') : 'Why This Works';
+      response += `🎯 ${whyWorksText}\n${data.strategy_explanation}\n\n`;
     }
     
     // Implementation steps
     if (data.strategy_working) {
-      response += `📝 Implementation Steps\n${data.strategy_working}\n\n`;
+      const stepsText = languageInfo ? getLocalizedText(languageInfo, 'implementationSteps') : 'Implementation Steps';
+      response += `📝 ${stepsText}\n${data.strategy_working}\n\n`;
     }
     
     // Budget allocations
     if (data.allocations && data.allocations.length > 0) {
-      response += "💰 Budget Breakdown\n\n";
+      const budgetText = languageInfo ? getLocalizedText(languageInfo, 'budgetBreakdown') : 'Budget Breakdown';
+      response += `💰 ${budgetText}\n\n`;
       data.allocations.forEach((allocation: any, index: number) => {
         const amount = allocation.amount || 0;
         const explanation = allocation.explanation || "";
@@ -693,15 +737,19 @@ export const useArtisanChat = () => {
     
     // Tech requirements
     if (data.tech_requirements) {
-      response += `🛠️ Tech Requirements\n${data.tech_requirements}\n\n`;
+      const techText = languageInfo ? getLocalizedText(languageInfo, 'techRequirements') : 'Tech Requirements';
+      response += `🛠️ ${techText}\n${data.tech_requirements}\n\n`;
     }
     
     // Timeline
     if (data.estimated_timeline) {
-      response += `⏱️ Timeline\n${data.estimated_timeline}\n\n`;
+      const timelineText = languageInfo ? getLocalizedText(languageInfo, 'timeline') : 'Timeline';
+      response += `⏱️ ${timelineText}\n${data.estimated_timeline}\n\n`;
     }
     
-    response += "---\nFeel free to ask for more details about any specific aspect of this strategy! 💬";
+    response += "---\n";
+    const feelFreeText = languageInfo ? getLocalizedText(languageInfo, 'feelFreeToAsk') : 'Feel free to ask for more details about any specific aspect of this strategy! 💬';
+    response += feelFreeText;
     
     return response;
   };

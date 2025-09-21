@@ -2,10 +2,11 @@
 
 import promptYaml from './artisan-marketing-prompt.yaml?raw';
 
-export const getArtisanPrompt = (userMessage, userDetails) => {
-  // Parse the YAML content and replace the userMessage variable
-  const prompt1 = promptYaml.replace('${userMessage}', userMessage);
-  const prompt = prompt1.replace('${userDetails}', JSON.stringify(userDetails));
+export const getArtisanPrompt = (userMessage, userDetails, languageInstruction = 'Respond in English.') => {
+  // Parse the YAML content and replace the variables
+  let prompt = promptYaml.replace('${userMessage}', userMessage);
+  prompt = prompt.replace('${userDetails}', JSON.stringify(userDetails));
+  prompt = prompt.replace('${languageInstruction}', languageInstruction);
   
   return prompt;
 };
