@@ -2,6 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { getTierNames, getLocalizedText } from '@/utils/languageDetection';
 
 interface Strategy {
   craft: string;
@@ -25,12 +26,14 @@ interface StrategySelectionProps {
   strategies: Strategy[];
   onSelectStrategy: (strategyIndex: number) => void;
   hasUserBudget?: boolean; // Whether user provided a budget
+  languageInfo?: { language: string; confidence: number; code: string };
 }
 
 export const StrategySelection: React.FC<StrategySelectionProps> = ({
   strategies,
   onSelectStrategy,
-  hasUserBudget = false
+  hasUserBudget = false,
+  languageInfo
 }) => {
   // Use the same logic as formatMultipleStrategies - check given_budget field
   const userProvidedBudget = strategies[0]?.given_budget > 0;
@@ -38,17 +41,24 @@ export const StrategySelection: React.FC<StrategySelectionProps> = ({
   // Sort strategies by allocated_budget (lowest to highest)
   const sortedStrategies = [...strategies].sort((a, b) => a.allocated_budget - b.allocated_budget);
   
-  // Assign labels based on budget order: lowest = budget-friendly, highest = premium
-  const budgetLabels = ['💰 Budget-Friendly Strategy', '⭐ Mid-Range Strategy', '💎 Premium Strategy'];
+  // Get tier names in user's language
+  const tierNames = languageInfo ? getTierNames(languageInfo) : { low: 'Low', mid: 'Mid', high: 'High' };
+  
+  // Assign labels based on budget order using localized tier names
+  const budgetLabels = [
+    `💰 ${tierNames.low}`, 
+    `⭐ ${tierNames.mid}`, 
+    `💎 ${tierNames.high}`
+  ];
 
   return (
     <div className="space-y-4">
       <div className="text-center mb-6">
         <h3 className="text-lg font-semibold text-foreground mb-2">
-          🎯 Choose a strategy to explore in detail
+          {languageInfo ? getLocalizedText(languageInfo, 'chooseStrategy') : '🎯 Choose a strategy to explore in detail'}
         </h3>
         <p className="text-sm text-muted-foreground">
-          Click on any strategy below to get a comprehensive breakdown
+          {languageInfo ? getLocalizedText(languageInfo, 'clickStrategy') : 'Click on any strategy below to get a comprehensive breakdown'}
         </p>
       </div>
       
@@ -104,7 +114,7 @@ export const StrategySelection: React.FC<StrategySelectionProps> = ({
                     onSelectStrategy(originalIndex);
                   }}
                 >
-                  View Detailed Strategy
+                  {languageInfo ? getLocalizedText(languageInfo, 'viewDetailed') : 'View Detailed Strategy'}
                 </Button>
               </div>
             </CardContent>
@@ -115,7 +125,7 @@ export const StrategySelection: React.FC<StrategySelectionProps> = ({
       
       <div className="text-center mt-4">
         <p className="text-xs text-muted-foreground">
-          Or ask me to elaborate on any specific aspect! 💬
+          {languageInfo ? getLocalizedText(languageInfo, 'askElaborate') : 'Or ask me to elaborate on any specific aspect! 💬'}
         </p>
       </div>
     </div>

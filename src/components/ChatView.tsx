@@ -13,6 +13,7 @@ interface Message {
   isStrategySelection?: boolean;
   hasUserBudget?: boolean;
   selectedStrategyIndex?: number;
+  languageInfo?: { language: string; confidence: number; code: string };
 }
 
 interface ChatViewProps {
@@ -113,6 +114,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
                   hasUserBudget={message.hasUserBudget}
                   selectedStrategyIndex={message.selectedStrategyIndex}
                   isFollowUpMode={conversationContext && conversationContext.selectedStrategy}
+                  languageInfo={message.languageInfo}
                 />
               ))}
             </>
@@ -121,7 +123,10 @@ export const ChatView: React.FC<ChatViewProps> = ({
         </div>
       </ScrollArea>
 
-      <ChatInput onSendMessage={onSendMessage} />
+      <ChatInput 
+        onSendMessage={onSendMessage} 
+        lastUserMessage={messages.filter(m => m.isUser).pop()?.text}
+      />
     </div>
   );
 };

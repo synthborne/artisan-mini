@@ -2,15 +2,21 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Send } from 'lucide-react';
+import { detectLanguage, getLocalizedText } from '@/utils/languageDetection';
 
 interface ChatInputProps {
   onSendMessage: (message: string) => void;
   disabled?: boolean;
+  lastUserMessage?: string; // To detect language from last user message
 }
 
-export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled = false }) => {
+export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled = false, lastUserMessage }) => {
   const [message, setMessage] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  
+  // Detect language for placeholder text
+  const languageInfo = lastUserMessage ? detectLanguage(lastUserMessage) : { language: 'English', confidence: 1, code: 'en' };
+  const placeholder = getLocalizedText(languageInfo, 'placeholder');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,7 +60,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled = 
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Type your message... (Enter to send, Shift+Enter for new line)"
+            placeholder={`${placeholder} (Enter to send, Shift+Enter for new line)`}
             disabled={disabled}
             className="min-h-[48px] max-h-[120px] resize-none transition-smooth focus:shadow-soft"
             aria-label="Chat message input"
