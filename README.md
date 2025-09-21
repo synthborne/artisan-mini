@@ -93,10 +93,14 @@ The application uses a custom design system inspired by traditional artisan craf
 
 ### Environment Variables
 
-Create a `.env` file in the root directory:
+1. Copy the example environment file:
+```bash
+cp .env.example .env
+```
 
+2. Edit the `.env` file and add your API key:
 ```env
-VITE_GEMINI_API_KEY=your_gemini_api_key_here
+VITE_GEMINI_API_KEY=your_actual_gemini_api_key_here
 ```
 
 ### AI Integration
@@ -104,8 +108,9 @@ VITE_GEMINI_API_KEY=your_gemini_api_key_here
 The application uses Google's Gemini API for generating marketing strategies. Make sure to:
 
 1. Get your API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Add it to your environment variables
-3. The API key is used in the `useArtisanChat` hook
+2. Copy `.env.example` to `.env` and replace `your_gemini_api_key_here` with your actual API key
+3. The API key is automatically loaded from the environment variables in the `useArtisanChat` hook
+4. **Important**: Never commit your `.env` file to version control - it's already included in `.gitignore`
 
 ## 🚀 Deployment
 
@@ -117,6 +122,12 @@ npm run build
 
 This creates a `dist` folder with optimized production files.
 
+### Environment Variables for Production
+
+When deploying to production platforms, make sure to set the environment variable:
+- **Vercel**: Add `VITE_GEMINI_API_KEY` in your project settings
+- **Other platforms**: Set the environment variable according to your platform's documentation
+
 ### Deploy to Vercel
 
 1. Install Vercel CLI:
@@ -124,7 +135,12 @@ This creates a `dist` folder with optimized production files.
 npm i -g vercel
 ```
 
-2. Deploy:
+2. Set environment variable:
+```bash
+vercel env add VITE_GEMINI_API_KEY
+```
+
+3. Deploy:
 ```bash
 vercel
 ```

@@ -327,7 +327,12 @@ export const useArtisanChat = () => {
     
     // Send to Gemini API
     try {
-      const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=AIzaSyBRHyJne2t7odaIVtKM4Zx_Itq3OD8s9M8', {
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      if (!apiKey) {
+        throw new Error('API key not found. Please set VITE_GEMINI_API_KEY in your .env file');
+      }
+      
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
