@@ -304,7 +304,7 @@ export const useArtisanChat = () => {
     };
     
     setMessages(prev => [...prev, waitingMessage]);
-    console.log(userDetails);
+    
     // Send to Gemini API
     try {
       const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=AIzaSyBRHyJne2t7odaIVtKM4Zx_Itq3OD8s9M8', {
@@ -329,7 +329,7 @@ export const useArtisanChat = () => {
 
       const data = await response.json();
       const apiText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response received';
-      console.log('Raw API response:', apiText);
+      
       // Parse JSON from API response
       let strategyData;
       try {
@@ -373,8 +373,6 @@ export const useArtisanChat = () => {
           tech_requirements: "N/A"
         };
       }
-      strategyData = strategyData;
-      console.log(strategyData);
 
       // Remove waiting message first
       setMessages(prev => prev.filter(msg => !msg.id.startsWith('waiting-')));
@@ -391,9 +389,7 @@ export const useArtisanChat = () => {
         setMessages(prev => [...prev, errorMessage]);
       } else if (strategyData.elaboration || (isFollowUpQuestion && strategyData)) {
         // Follow-up question response
-        console.log('Follow-up response detected:', strategyData);
         const formattedResponse = formatElaboration(strategyData);
-        console.log('Formatted elaboration response:', formattedResponse);
         const botMessage: Message = {
           id: `bot-${Date.now()}`,
           text: formattedResponse,
@@ -423,9 +419,8 @@ export const useArtisanChat = () => {
         // Check if this is a follow-up question that didn't match other patterns
         if (isFollowUpQuestion) {
           // Treat as elaboration response
-          console.log('Follow-up question - treating as elaboration:', strategyData);
           const formattedResponse = formatElaboration(strategyData);
-        const botMessage: Message = {
+          const botMessage: Message = {
           id: `bot-${Date.now()}`,
           text: formattedResponse,
           isUser: false,
@@ -463,15 +458,13 @@ export const useArtisanChat = () => {
   }, [userDetails, conversationContext]);
 
   const formatElaboration = (data: any) => {
-    console.log('formatElaboration received data:', data);
-    
     let response = "";
     
     // Handle different response structures
     if (data.elaboration) {
     if (typeof data.elaboration === 'string') {
         // Clean up the string and format it properly
-        let elaborationText = data.elaboration.trim();
+        const elaborationText = data.elaboration.trim();
         
         // Add proper formatting for better readability
         if (elaborationText.includes('\n')) {
@@ -594,7 +587,6 @@ export const useArtisanChat = () => {
       // Remove trailing whitespace
       .trim();
     
-    console.log('Formatted elaboration response:', response);
     return response;
   };
 
