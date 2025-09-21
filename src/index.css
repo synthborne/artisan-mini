@@ -1,0 +1,137 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Artisan Chat Design System - Warm, earthy palette */
+    --background: 32 35% 96%;
+    --foreground: 25 15% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 25 15% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 25 15% 15%;
+
+    /* Terracotta primary inspired by clay pottery */
+    --primary: 15 65% 55%;
+    --primary-foreground: 0 0% 98%;
+    --primary-glow: 15 45% 65%;
+
+    /* Warm secondary tones */
+    --secondary: 32 25% 88%;
+    --secondary-foreground: 25 15% 25%;
+
+    /* Muted earth tones */
+    --muted: 32 20% 92%;
+    --muted-foreground: 25 8% 45%;
+
+    /* Soft accent */
+    --accent: 35 30% 85%;
+    --accent-foreground: 25 15% 25%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 32 15% 85%;
+    --input: 32 15% 90%;
+    --ring: 15 65% 55%;
+
+    --radius: 0.75rem;
+
+    /* Chat specific colors */
+    --chat-bubble-user: 15 65% 55%;
+    --chat-bubble-user-foreground: 0 0% 98%;
+    --chat-bubble-bot: 0 0% 100%;
+    --chat-bubble-bot-foreground: 25 15% 15%;
+    
+    /* Beautiful gradients */
+    --gradient-warm: linear-gradient(135deg, hsl(15 65% 55%), hsl(25 55% 60%));
+    --gradient-subtle: linear-gradient(180deg, hsl(32 35% 96%), hsl(32 30% 94%));
+    
+    /* Elegant shadows */
+    --shadow-soft: 0 2px 8px -2px hsl(25 15% 15% / 0.1);
+    --shadow-elevated: 0 8px 25px -5px hsl(25 15% 15% / 0.15);
+    --shadow-glow: 0 0 20px hsl(15 65% 55% / 0.15);
+
+    /* Transitions */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    /* Dark mode artisan theme */
+    --background: 25 15% 8%;
+    --foreground: 32 20% 90%;
+
+    --card: 25 15% 12%;
+    --card-foreground: 32 20% 90%;
+
+    --popover: 25 15% 12%;
+    --popover-foreground: 32 20% 90%;
+
+    --primary: 15 65% 55%;
+    --primary-foreground: 0 0% 98%;
+    --primary-glow: 15 45% 65%;
+
+    --secondary: 25 15% 20%;
+    --secondary-foreground: 32 20% 85%;
+
+    --muted: 25 15% 18%;
+    --muted-foreground: 32 15% 60%;
+
+    --accent: 25 15% 22%;
+    --accent-foreground: 32 20% 85%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 25 15% 25%;
+    --input: 25 15% 20%;
+    --ring: 15 65% 55%;
+
+    --chat-bubble-user: 15 65% 55%;
+    --chat-bubble-user-foreground: 0 0% 98%;
+    --chat-bubble-bot: 25 15% 15%;
+    --chat-bubble-bot-foreground: 32 20% 85%;
+
+    --gradient-warm: linear-gradient(135deg, hsl(15 65% 55%), hsl(25 55% 60%));
+    --gradient-subtle: linear-gradient(180deg, hsl(25 15% 8%), hsl(25 15% 12%));
+    
+    --shadow-soft: 0 2px 8px -2px hsl(0 0% 0% / 0.3);
+    --shadow-elevated: 0 8px 25px -5px hsl(0 0% 0% / 0.4);
+    --shadow-glow: 0 0 20px hsl(15 65% 55% / 0.2);
+
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
