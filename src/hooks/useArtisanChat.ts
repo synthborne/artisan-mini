@@ -327,12 +327,12 @@ export const useArtisanChat = () => {
     
     // Send to Gemini API
     try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      if (!apiKey) {
-        throw new Error('API key not found. Please set VITE_GEMINI_API_KEY in your .env file');
-      }
+      // const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      // if (!apiKey) {
+      //   throw new Error('API key not found. Please set VITE_GEMINI_API_KEY in your .env file');
+      // }
       
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=AIzaSyBMK_LRnGy6MRAXM-dQoc0wFWeYgZCoZSk`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
