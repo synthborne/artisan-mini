@@ -332,7 +332,7 @@ export const useArtisanChat = () => {
       //   throw new Error('API key not found. Please set VITE_GEMINI_API_KEY in your .env file');
       // }
       
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=AIzaSyBMK_LRnGy6MRAXM-dQoc0wFWeYgZCoZSk`, {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=AIzaSyBD2hpGn17D5t-nJzN973qJF-7ty_Vcg-4`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
