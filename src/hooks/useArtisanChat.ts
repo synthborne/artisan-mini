@@ -237,7 +237,7 @@ export const useArtisanChat = () => {
     if (pendingStrategies && pendingStrategies[strategyIndex]) {
       const selectedStrategy = pendingStrategies[strategyIndex];
       // Get language info from the last user message
-      const lastUserMessage = messages.findLast(m => m.isUser);
+      const lastUserMessage = messages.filter(m => m.isUser).pop();
       const languageInfo = lastUserMessage?.languageInfo || { language: 'English', confidence: 1, code: 'en' };
       const formattedResponse = formatMarketingStrategy(selectedStrategy, languageInfo);
       
@@ -268,7 +268,7 @@ export const useArtisanChat = () => {
   const showStrategySelection = useCallback(() => {
     if (pendingStrategies) {
       // Get languageInfo from the last user message in the conversation
-      const lastUserMessage = messages.findLast(m => m.isUser);
+      const lastUserMessage = messages.filter(m => m.isUser).pop();
       const languageInfo = lastUserMessage?.languageInfo || { language: 'English', confidence: 1, code: 'en' };
 
       const formattedResponse = formatMultipleStrategies(pendingStrategies, languageInfo);
@@ -332,7 +332,7 @@ export const useArtisanChat = () => {
       //   throw new Error('API key not found. Please set VITE_GEMINI_API_KEY in your .env file');
       // }
       
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=AIzaSyBD2hpGn17D5t-nJzN973qJF-7ty_Vcg-4`, {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=AIzaSyBD2hpGn17D5t-nJzN973qJF-7ty_Vcg-4`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -349,7 +349,9 @@ export const useArtisanChat = () => {
       });
 
       if (!response.ok) {
-        throw new Error('API request failed');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error?.message || `API request failed with status ${response.status}`;
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -478,7 +480,7 @@ export const useArtisanChat = () => {
       
       const errorMessage: Message = {
         id: `bot-error-${Date.now()}`,
-        text: `❌ ${getLocalizedText(languageInfo, 'error')}`,
+        text: `❌ I apologize, but I'm having trouble processing your request right now. Please try again in a moment.`,
         isUser: false,
         timestamp: new Date(),
         languageInfo
@@ -495,10 +497,36 @@ export const useArtisanChat = () => {
     if (data.elaboration) {
     if (typeof data.elaboration === 'string') {
         // Clean up the string and format it properly
-        const elaborationText = data.elaboration.trim();
+        let elaborationText = data.elaboration.trim();
         
-        // Add proper formatting for better readability
-        if (elaborationText.includes('\n')) {
+        // Check if it's a numbered list that needs formatting
+        if (elaborationText.match(/^\d+\./)) {
+          // Split by numbered points and format properly
+          const points = elaborationText.split(/(?=\d+\.)/);
+          response = "💡  Detailed Information \n\n";
+          points.forEach((point, index) => {
+            if (point.trim()) {
+              // Clean up the point and add proper spacing
+              const cleanPoint = point.trim().replace(/\n+/g, ' ').replace(/\s+/g, ' ');
+              response += `${cleanPoint}\n\n`;
+            }
+          });
+        } else if (elaborationText.includes('1.') || elaborationText.includes('2.') || elaborationText.includes('3.')) {
+          // Handle cases where numbered lists might not start at the beginning
+          const lines = elaborationText.split('\n');
+          response = "💡  Detailed Information \n\n";
+          lines.forEach((line, index) => {
+            if (line.trim()) {
+              // Check if it's a numbered line
+              if (line.match(/^\s*\d+\./)) {
+                response += `${line.trim()}\n\n`;
+              } else {
+                // If it's a continuation of the previous point, add it without extra spacing
+                response += `${line.trim()}\n`;
+              }
+            }
+          });
+        } else if (elaborationText.includes('\n')) {
           // If it already has line breaks, use as is
           response = elaborationText;
         } else {
