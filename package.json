@@ -1,8 +1,17 @@
 {
   "name": "artisan-mini",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
+  "description": "AI-powered marketing strategies for artisans and craftspeople",
+  "homepage": "https://artisan-mini.vercel.app",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/synthborne/artisan-mini.git"
+  },
+  "bugs": {
+    "url": "https://github.com/synthborne/artisan-mini/issues"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
